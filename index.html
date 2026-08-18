@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Подберите блюда из продуктов, которые уже есть дома.">
+  <title>Есть что приготовить</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Есть что приготовить — на главную">
+        <span class="brand-mark" aria-hidden="true">⌁</span>
+        <span>Есть что приготовить</span>
+      </a>
+      <span class="header-note">Вкусные идеи без лишних покупок</span>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> Домашняя кухня проще</p>
+          <h1 id="page-title">Что приготовить<br><em>из того, что есть?</em></h1>
+          <p class="hero-text">Введите продукты из холодильника — подберём три блюда, которые потребуют минимум покупок.</p>
+
+          <ul class="benefits" aria-label="Преимущества сервиса">
+            <li><span>18</span> простых рецептов</li>
+            <li><span>3</span> лучших варианта</li>
+            <li><span>0</span> лишних сложностей</li>
+          </ul>
+        </div>
+
+        <div class="pan-illustration" aria-hidden="true">
+          <div class="steam steam-one"></div>
+          <div class="steam steam-two"></div>
+          <div class="pan">
+            <span class="food food-tomato">●</span>
+            <span class="food food-egg">●</span>
+            <span class="food food-leaf">◆</span>
+          </div>
+          <div class="pan-handle"></div>
+          <span class="floating-label label-one">свежо</span>
+          <span class="floating-label label-two">просто</span>
+        </div>
+      </section>
+
+      <section class="search-card" aria-labelledby="search-title">
+        <div class="search-heading">
+          <div>
+            <span class="step-number">01</span>
+            <div>
+              <h2 id="search-title">Что у вас есть дома?</h2>
+              <p>Перечислите продукты через запятую</p>
+            </div>
+          </div>
+          <span class="privacy-note">Всё работает прямо в браузере</span>
+        </div>
+
+        <form id="ingredients-form" novalidate>
+          <label class="sr-only" for="ingredients">Продукты, которые есть дома</label>
+          <div class="input-wrap">
+            <textarea id="ingredients" name="ingredients" rows="2" placeholder="Например: картофель, яйца, сыр, помидоры" aria-describedby="form-message"></textarea>
+            <span class="input-icon" aria-hidden="true">＋</span>
+          </div>
+          <div class="form-footer">
+            <p class="input-hint">Можно написать: <button type="button" class="example-button" id="fill-example">курица, рис, морковь, лук</button></p>
+            <div class="actions">
+              <button class="button button-ghost" type="button" id="clear-button">Очистить</button>
+              <button class="button button-primary" type="submit">
+                Подобрать блюда
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+          <p class="form-message" id="form-message" role="alert"></p>
+        </form>
+      </section>
+
+      <section class="results-section" id="results-section" aria-labelledby="results-title" hidden>
+        <div class="section-heading">
+          <div>
+            <span class="step-number">02</span>
+            <div>
+              <h2 id="results-title">Вот что можно приготовить</h2>
+              <p id="results-summary">Лучшие совпадения по вашим продуктам</p>
+            </div>
+          </div>
+          <button class="text-button" type="button" id="edit-button">← Изменить продукты</button>
+        </div>
+        <div class="recipe-grid" id="recipe-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Готовьте из того, что уже есть — это проще, дешевле и бережнее.</p>
+      <span>Сделано с заботой о домашней еде</span>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
