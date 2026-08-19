@@ -25,7 +25,7 @@
           <p class="hero-text">Введите продукты из холодильника — подберём три блюда, которые потребуют минимум покупок.</p>
 
           <ul class="benefits" aria-label="Преимущества сервиса">
-            <li><span>18</span> простых рецептов</li>
+            <li><span>180</span> рецептов</li>
             <li><span>3</span> лучших варианта</li>
             <li><span>0</span> лишних сложностей</li>
           </ul>
@@ -51,20 +51,85 @@
             <span class="step-number">01</span>
             <div>
               <h2 id="search-title">Что у вас есть дома?</h2>
-              <p>Перечислите продукты через запятую</p>
+              <p>Добавьте продукты вручную или загрузите фотографию</p>
             </div>
           </div>
           <span class="privacy-note">Всё работает прямо в браузере</span>
         </div>
 
         <form id="ingredients-form" novalidate>
-          <label class="sr-only" for="ingredients">Продукты, которые есть дома</label>
-          <div class="input-wrap">
-            <textarea id="ingredients" name="ingredients" rows="2" placeholder="Например: картофель, яйца, сыр, помидоры" aria-describedby="form-message"></textarea>
-            <span class="input-icon" aria-hidden="true">＋</span>
+          <div class="add-product-grid">
+            <div class="manual-entry">
+              <label class="field-label" for="ingredients">Ввести продукты</label>
+              <div class="input-wrap">
+                <input id="ingredients" name="ingredients" type="text" placeholder="Начните вводить, например «кар»" autocomplete="off" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false" aria-describedby="input-help form-message">
+                <button class="input-add-button" id="add-manual-button" type="button" aria-label="Добавить введённый продукт">＋</button>
+                <ul class="suggestions" id="suggestions" role="listbox" aria-label="Подходящие продукты" hidden></ul>
+              </div>
+              <p class="field-help" id="input-help">Выберите подсказку или нажмите Enter</p>
+            </div>
+
+            <div class="photo-entry">
+              <span class="field-label">Добавить по фото</span>
+              <div class="photo-source-buttons">
+                <label class="photo-button" for="photo-input">
+                  <span class="photo-button-icon" aria-hidden="true">▣</span>
+                  <span><strong>Выбрать фотографию</strong><small>Из галереи устройства</small></span>
+                </label>
+                <label class="camera-button" for="camera-input"><span aria-hidden="true">◉</span> Камера</label>
+              </div>
+              <input class="sr-only" id="photo-input" type="file" accept="image/*">
+              <input class="sr-only" id="camera-input" type="file" accept="image/*" capture="environment">
+            </div>
           </div>
+
+          <div class="recipe-filter-row">
+            <label for="cuisine-filter">
+              <span class="filter-label">Кухня</span>
+              <span class="filter-help">Необязательный фильтр</span>
+            </label>
+            <div class="select-wrap">
+              <select id="cuisine-filter" name="cuisine">
+                <option value="any">Любая</option>
+                <option value="european">Европейская</option>
+                <option value="asian">Азиатская</option>
+                <option value="italian">Итальянская</option>
+                <option value="central-asian">Казахская / Центральноазиатская</option>
+                <option value="georgian">Грузинская</option>
+                <option value="mediterranean">Средиземноморская</option>
+                <option value="middle-eastern">Ближневосточная</option>
+                <option value="home">Домашняя кухня</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="selected-products" id="selected-products-wrap" hidden>
+            <div class="selected-products-heading">
+              <h3>Ваши продукты <span id="products-count">0</span></h3>
+              <span>Нажмите ×, чтобы удалить</span>
+            </div>
+            <div class="product-chips" id="product-chips" aria-live="polite"></div>
+          </div>
+
+          <section class="photo-panel" id="photo-panel" aria-labelledby="photo-panel-title" hidden>
+            <div class="photo-preview-wrap">
+              <img id="photo-preview" alt="Предпросмотр загруженной фотографии">
+            </div>
+            <div class="photo-panel-content">
+              <p class="photo-kicker">Локальный анализ изображения</p>
+              <h3 id="photo-panel-title">Распознаём продукты…</h3>
+              <div class="recognition-loader" id="recognition-loader" aria-label="Идёт распознавание"><span></span></div>
+              <p class="photo-status" id="photo-status" aria-live="polite">Изображение остаётся на вашем устройстве.</p>
+              <div class="recognized-products" id="recognized-products" hidden></div>
+              <div class="photo-actions" id="photo-actions" hidden>
+                <button class="button button-primary" id="confirm-photo-button" type="button">Добавить выбранные</button>
+                <button class="button button-ghost" id="cancel-photo-button" type="button">Отмена</button>
+              </div>
+            </div>
+          </section>
+
           <div class="form-footer">
-            <p class="input-hint">Можно написать: <button type="button" class="example-button" id="fill-example">курица, рис, морковь, лук</button></p>
+            <p class="input-hint">Добавить пример: <button type="button" class="example-button" id="fill-example">курица, рис, морковь, лук</button></p>
             <div class="actions">
               <button class="button button-ghost" type="button" id="clear-button">Очистить</button>
               <button class="button button-primary" type="submit">
@@ -89,6 +154,10 @@
           <button class="text-button" type="button" id="edit-button">← Изменить продукты</button>
         </div>
         <div class="recipe-grid" id="recipe-grid" aria-live="polite"></div>
+        <div class="more-results" id="more-results" hidden>
+          <button class="button button-more" id="show-more-button" type="button">Показать ещё варианты <span aria-hidden="true">＋</span></button>
+          <p id="more-results-note"></p>
+        </div>
       </section>
     </main>
 
@@ -98,6 +167,8 @@
     </footer>
   </div>
 
+  <script src="products.js"></script>
+  <script src="recipe-library.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
