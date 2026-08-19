@@ -98,6 +98,8 @@ let activeSuggestionIndex = -1;
 let previewUrl = "";
 let rankedRecommendations = [];
 let visibleRecipeCount = 3;
+let visionWorker;
+let recognitionRequestId = 0;
 
 function normalizeText(value) {
   return value.toLowerCase().replace(/ё/g, "е").replace(/[^а-яa-z\s-]/g, " ").replace(/\s+/g, " ").trim();
@@ -464,81 +466,70 @@ async function handlePhotoChange(event) {
   photoPreview.src = previewUrl;
   photoPanel.hidden = false;
   photoPanelTitle.textContent = "Распознаём продукты…";
-  photoStatus.textContent = "Изображение анализируется только в вашем браузере и никуда не отправляется.";
+  photoStatus.textContent = "Готовим локальную модель. При первом запуске это может занять несколько минут.";
   photoStatus.classList.remove("is-error");
   recognitionLoader.hidden = false;
 
   try {
-    const [candidates] = await Promise.all([analyzeImage(file), new Promise(resolve => setTimeout(resolve, 700))]);
+    const candidates = await analyzeImage(file);
     showRecognitionResult(candidates);
   } catch (error) {
-    showRecognitionResult([]);
+    showRecognitionResult([], error.message);
   }
 }
 [photoInput, cameraInput].forEach(fileInput => fileInput.addEventListener("change", handlePhotoChange));
 
-async function analyzeImage(file) {
-  const bitmap = typeof createImageBitmap === "function" ? await createImageBitmap(file) : await loadImageElement(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = 64;
-  canvas.height = 64;
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  if (typeof bitmap.close === "function") bitmap.close();
-  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-  const buckets = { red: 0, orange: 0, green: 0, yellow: 0 };
-  let colorfulPixels = 0;
-
-  for (let index = 0; index < pixels.length; index += 4) {
-    const [hue, saturation, lightness] = rgbToHsl(pixels[index], pixels[index + 1], pixels[index + 2]);
-    if (saturation < .34 || lightness < .16 || lightness > .9) continue;
-    colorfulPixels += 1;
-    if (hue <= 18 || hue >= 345) buckets.red += 1;
-    else if (hue > 18 && hue <= 44) buckets.orange += 1;
-    else if (hue > 44 && hue <= 70) buckets.yellow += 1;
-    else if (hue > 70 && hue <= 165) buckets.green += 1;
-  }
-
-  if (colorfulPixels < 180) return [];
-  const share = key => buckets[key] / colorfulPixels;
-  const candidates = [];
-  if (share("red") >= .24) candidates.push({ product: "помидоры", confidence: share("red") });
-  if (share("orange") >= .24) candidates.push({ product: "морковь", confidence: share("orange") });
-  if (share("green") >= .34) candidates.push({ product: "зелень", confidence: share("green") });
-  if (share("yellow") >= .38) candidates.push({ product: "бананы", confidence: share("yellow") });
-  return candidates.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+function getVisionWorker() {
+  if (!window.Worker) throw new Error("Этот браузер не поддерживает локальное распознавание в фоновом потоке.");
+  if (!visionWorker) visionWorker = new Worker("vision-worker.js", { type: "module" });
+  return visionWorker;
 }
 
-function loadImageElement(file) {
+function analyzeImage(file) {
+  const worker = getVisionWorker();
+  const id = ++recognitionRequestId;
+  const labels = Object.entries(PRODUCT_VISION_LABELS)
+    .filter(([product]) => PRODUCT_CATALOG.includes(product))
+    .map(([product, label]) => ({ product, label }));
+
   return new Promise((resolve, reject) => {
-    const image = new Image();
-    const url = URL.createObjectURL(file);
-    image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
-    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image loading failed")); };
-    image.src = url;
+    const handleMessage = event => {
+      const data = event.data || {};
+      if (data.type === "progress") {
+        const suffix = data.progress ? ` ${data.progress}%` : "";
+        photoStatus.textContent = `Загружаем модель распознавания${suffix}. Фото остаётся на устройстве.`;
+        return;
+      }
+      if (data.id !== id) return;
+      if (data.type === "status") {
+        photoStatus.textContent = data.status === "analysis"
+          ? "Ищем отдельные продукты на фотографии…"
+          : "Запускаем локальную модель распознавания…";
+        return;
+      }
+      if (data.type === "result") {
+        cleanup();
+        resolve(data.candidates);
+      } else if (data.type === "error") {
+        cleanup();
+        reject(new Error(data.message));
+      }
+    };
+    const handleError = () => {
+      cleanup();
+      reject(new Error("Не удалось загрузить локальную модель. Проверьте подключение к интернету и попробуйте снова."));
+    };
+    const cleanup = () => {
+      worker.removeEventListener("message", handleMessage);
+      worker.removeEventListener("error", handleError);
+    };
+    worker.addEventListener("message", handleMessage);
+    worker.addEventListener("error", handleError);
+    worker.postMessage({ type: "analyze", id, file, labels });
   });
 }
 
-function rgbToHsl(red, green, blue) {
-  const r = red / 255;
-  const g = green / 255;
-  const b = blue / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const delta = max - min;
-  let hue = 0;
-  if (delta) {
-    if (max === r) hue = 60 * (((g - b) / delta) % 6);
-    else if (max === g) hue = 60 * ((b - r) / delta + 2);
-    else hue = 60 * ((r - g) / delta + 4);
-  }
-  if (hue < 0) hue += 360;
-  const lightness = (max + min) / 2;
-  const saturation = delta ? delta / (1 - Math.abs(2 * lightness - 1)) : 0;
-  return [hue, saturation, lightness];
-}
-
-function showRecognitionResult(candidates) {
+function showRecognitionResult(candidates, errorMessage = "") {
   recognitionLoader.hidden = true;
   recognizedProducts.innerHTML = "";
   recognizedProducts.hidden = candidates.length === 0;
@@ -547,14 +538,16 @@ function showRecognitionResult(candidates) {
 
   if (!candidates.length) {
     photoPanelTitle.textContent = "Нужна другая фотография";
-    photoStatus.textContent = "Не удалось уверенно определить продукты. Попробуйте другое фото или добавьте продукты вручную.";
+    photoStatus.textContent = errorMessage
+      ? `Распознавание не завершено: ${errorMessage}`
+      : "Не удалось уверенно определить продукты. Попробуйте другое фото или добавьте продукты вручную.";
     photoStatus.classList.add("is-error");
     return;
   }
 
   photoPanelTitle.textContent = "Мы нашли на фото:";
   photoStatus.textContent = "Это предварительные подсказки. Снимите выбор с неверных продуктов перед добавлением.";
-  candidates.forEach(({ product }) => {
+  candidates.forEach(({ product, confidence }) => {
     const label = document.createElement("label");
     label.className = "recognized-option";
     const checkbox = document.createElement("input");
@@ -562,7 +555,8 @@ function showRecognitionResult(candidates) {
     checkbox.value = product;
     checkbox.checked = true;
     const text = document.createElement("span");
-    text.textContent = product;
+    const name = product.charAt(0).toUpperCase() + product.slice(1);
+    text.textContent = `${name} — ${Math.round(confidence * 100)}%`;
     label.append(checkbox, text);
     recognizedProducts.append(label);
   });

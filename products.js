@@ -22,3 +22,41 @@ const PRODUCT_CATALOG = [
   "пельмени", "вареники", "грибы", "шампиньоны", "рыба", "фарш", "горох", "дрожжи", "разрыхлитель", "крахмал", "какао",
   "шоколад", "орехи", "изюм", "семечки", "кокосовая стружка", "овощной бульон", "куриный бульон", "вода"
 ];
+
+// Английские visual prompts нужны OWL-ViT. Ключи намеренно ограничены PRODUCT_CATALOG:
+// модель не может предложить продукт, которого нет в справочнике приложения.
+const PRODUCT_VISION_LABELS = {
+  "авокадо": "avocado", "айва": "quince fruit", "ананас": "pineapple", "апельсины": "orange fruit",
+  "арбуз": "watermelon", "баклажаны": "eggplant", "бананы": "banana", "батат": "sweet potato",
+  "брокколи": "broccoli", "брюква": "rutabaga", "виноград": "grapes", "вишня": "cherries",
+  "гранат": "pomegranate", "грейпфрут": "grapefruit", "груши": "pear", "дыня": "melon",
+  "ежевика": "blackberries", "зелень": "fresh herbs", "имбирь": "ginger root", "кабачки": "zucchini",
+  "капуста": "cabbage", "капуста брюссельская": "brussels sprouts", "капуста пекинская": "napa cabbage",
+  "картофель": "potato", "киви": "kiwi fruit", "клубника": "strawberries", "клюква": "cranberries",
+  "кукуруза": "corn", "лайм": "lime fruit", "лимоны": "lemon", "лук": "onion",
+  "лук зелёный": "green onions", "малина": "raspberries", "манго": "mango", "морковь": "carrot",
+  "нектарины": "nectarine", "огурцы": "cucumber", "оливки": "olives", "перец": "bell pepper",
+  "перец чили": "chili pepper", "персики": "peach", "петрушка": "parsley", "помидоры": "tomato",
+  "редис": "radish", "репа": "turnip", "свёкла": "beetroot", "сельдерей": "celery",
+  "сливы": "plum", "смородина": "currants", "тыква": "pumpkin", "укроп": "dill",
+  "хурма": "persimmon", "цветная капуста": "cauliflower", "чеснок": "garlic", "черешня": "sweet cherries",
+  "черника": "blueberries", "шпинат": "spinach", "яблоки": "apple",
+  "говядина": "beef meat", "свинина": "pork meat", "баранина": "lamb meat", "бекон": "bacon",
+  "ветчина": "ham", "колбаса": "sausage", "сосиски": "hot dog sausages", "курица": "chicken meat",
+  "куриная грудка": "chicken breast", "куриные бёдра": "chicken thighs", "куриные крылья": "chicken wings",
+  "индейка": "turkey meat", "утка": "duck meat", "лосось": "salmon", "форель": "trout fish",
+  "треска": "cod fish", "скумбрия": "mackerel fish", "сельдь": "herring fish", "тунец": "tuna fish",
+  "креветки": "shrimp", "кальмары": "squid", "мидии": "mussels", "крабовые палочки": "crab sticks",
+  "рыба": "fish", "фарш": "ground meat", "молоко": "milk carton", "сливки": "cream carton",
+  "сметана": "sour cream tub", "кефир": "kefir bottle", "йогурт": "yogurt cup", "творог": "cottage cheese",
+  "сыр": "cheese", "сыр плавленый": "processed cheese", "моцарелла": "mozzarella cheese",
+  "брынза": "feta cheese", "масло сливочное": "butter", "ряженка": "fermented milk bottle",
+  "рис": "bag of rice", "гречка": "bag of buckwheat", "овсянка": "oatmeal package", "макароны": "pasta package",
+  "спагетти": "spaghetti package", "лапша": "noodles package", "хлеб": "loaf of bread", "батон": "white bread loaf",
+  "лаваш": "flatbread", "багет": "baguette", "яйца": "egg", "мука": "bag of flour", "сахар": "bag of sugar",
+  "масло": "cooking oil bottle", "масло оливковое": "olive oil bottle", "растительное масло": "vegetable oil bottle",
+  "майонез": "mayonnaise jar", "кетчуп": "ketchup bottle", "соевый соус": "soy sauce bottle",
+  "томатная паста": "tomato paste jar", "мёд": "honey jar", "варенье": "jam jar", "горошек": "green peas",
+  "фасоль": "beans", "нут": "chickpeas", "чечевица": "lentils", "грибы": "mushrooms",
+  "шампиньоны": "button mushrooms", "шоколад": "chocolate bar", "орехи": "nuts", "изюм": "raisins"
+};
