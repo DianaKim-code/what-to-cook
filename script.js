@@ -46,6 +46,10 @@ recipes.forEach(recipe => {
   recipe.cuisine = inferRecipeCuisine(recipe);
 });
 recipes.push(...EXPANDED_RECIPES);
+recipes.forEach(recipe => {
+  const video = RECIPE_VIDEOS[recipe.name];
+  if (video) Object.assign(recipe, video);
+});
 
 const aliases = {
   "яйцо": "яйца", "яички": "яйца", "картошка": "картофель", "картошечка": "картофель",
@@ -323,6 +327,7 @@ function recipeCard(recipe, index) {
           <h4>Как приготовить</h4>
           <p>${recipe.method}</p>
         </div>
+        ${recipe.youtubeUrl ? `<a class="recipe-video-link" href="${recipe.youtubeUrl}" rel="external" aria-label="Смотреть видео приготовления блюда «${recipe.name}» на YouTube">▶ Смотреть видео на YouTube</a>` : ""}
       </div>
     </article>`;
 }

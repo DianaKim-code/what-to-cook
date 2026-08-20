@@ -261,3 +261,88 @@ const EXPANDED_RECIPE_DATA = [
 ];
 
 const EXPANDED_RECIPES = EXPANDED_RECIPE_DATA.map(makeRecipe);
+
+// Проверенные прямые ссылки на полноценные YouTube-рецепты.
+// Если блюда нет в этом справочнике, видеокнопка в карточке не показывается.
+const RECIPE_VIDEOS = {
+  "Пышный омлет": {
+    youtubeUrl: "https://www.youtube.com/watch?v=5cwFAPkOYFY",
+    youtubeTitle: "Пышный омлет на сковороде"
+  },
+  "Яичница с овощами": {
+    youtubeUrl: "https://www.youtube.com/watch?v=y72x9uJz9NM",
+    youtubeTitle: "Яичница с овощами — завтрак за 5 минут"
+  },
+  "Жареный картофель": {
+    youtubeUrl: "https://www.youtube.com/watch?v=Ybu4N3od_Cg",
+    youtubeTitle: "Как правильно жарить картошку"
+  },
+  "Рис с овощами": {
+    youtubeUrl: "https://www.youtube.com/watch?v=mFNIoPlLjkk",
+    youtubeTitle: "Рис с овощами"
+  },
+  "Макароны с сыром": {
+    youtubeUrl: "https://www.youtube.com/watch?v=O73qiE24dfY",
+    youtubeTitle: "Макароны с сыром на сковороде"
+  },
+  "Овощной салат": {
+    youtubeUrl: "https://www.youtube.com/watch?v=dREdLOmsJgA",
+    youtubeTitle: "Овощной салат из помидоров, огурцов и перца"
+  },
+  "Горячие бутерброды": {
+    youtubeUrl: "https://www.youtube.com/watch?v=cvwX2_dOFFU",
+    youtubeTitle: "Горячие бутерброды на завтрак"
+  },
+  "Домашние сырники": {
+    youtubeUrl: "https://www.youtube.com/watch?v=O2j2-oJHCWA",
+    youtubeTitle: "Домашние сырники на сковороде"
+  },
+  "Куриный суп": {
+    youtubeUrl: "https://www.youtube.com/watch?v=tIUiSYOaY-s",
+    youtubeTitle: "Куриный суп с вермишелью"
+  },
+  "Овощной суп": {
+    youtubeUrl: "https://www.youtube.com/watch?v=WxMtLeb7tl0",
+    youtubeTitle: "Овощной суп"
+  },
+  "Запечённая курица": {
+    youtubeUrl: "https://www.youtube.com/watch?v=0pLR34g6tTk",
+    youtubeTitle: "Запечённая курица в духовке"
+  },
+  "Картофельная запеканка": {
+    youtubeUrl: "https://www.youtube.com/watch?v=BX0CTlbK6GM",
+    youtubeTitle: "Картофельная запеканка"
+  },
+  "Гречка с грибами в духовке": {
+    youtubeUrl: "https://www.youtube.com/watch?v=FJIKfKH8mBY",
+    youtubeTitle: "Гречка с грибами в духовке"
+  },
+  "Тушёная капуста": {
+    youtubeUrl: "https://www.youtube.com/watch?v=UwByqsfZzq8",
+    youtubeTitle: "Тушёная капуста с морковью и луком"
+  },
+  "Картофель по-деревенски": {
+    youtubeUrl: "https://www.youtube.com/watch?v=eLOp_Hsg0Yo",
+    youtubeTitle: "Картофель по-деревенски в духовке"
+  },
+  "Драники со сметаной": {
+    youtubeUrl: "https://www.youtube.com/watch?v=805JSUJHOXQ",
+    youtubeTitle: "Драники со сметаной"
+  },
+  "Домашние котлеты из фарша": {
+    youtubeUrl: "https://www.youtube.com/watch?v=Mq3x6MI9A40",
+    youtubeTitle: "Домашние котлеты из фарша"
+  },
+  "Фаршированные перцы": {
+    youtubeUrl: "https://www.youtube.com/watch?v=S1Ndyynv-aQ",
+    youtubeTitle: "Фаршированные перцы с мясом и рисом"
+  },
+  "Макароны по-флотски": {
+    youtubeUrl: "https://www.youtube.com/watch?v=n5JZJ6IzeLY",
+    youtubeTitle: "Макароны по-флотски"
+  },
+  "Овощное рагу": {
+    youtubeUrl: "https://www.youtube.com/watch?v=zQarmzjpmyE",
+    youtubeTitle: "Овощное рагу из доступных овощей"
+  }
+};
