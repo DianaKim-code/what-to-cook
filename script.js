@@ -104,6 +104,9 @@ let rankedRecommendations = [];
 let visibleRecipeCount = 3;
 let visionWorker;
 let recognitionRequestId = 0;
+const SESSION_STATE_KEY = "what-to-cook:session-state:v1";
+let isRestoringSession = false;
+let scrollSaveTimer;
 
 function normalizeText(value) {
   return value.toLowerCase().replace(/ё/g, "е").replace(/[^а-яa-z\s-]/g, " ").replace(/\s+/g, " ").trim();
@@ -112,6 +115,93 @@ function normalizeText(value) {
 function normalizeIngredient(value) {
   const clean = normalizeText(value);
   return aliases[clean] || clean;
+}
+
+function getFilterState() {
+  return [...document.querySelectorAll(".recipe-filter-row select, .recipe-filter-row input")].reduce((filters, field) => {
+    const key = field.name || field.id;
+    if (!key) return filters;
+    if (field.type === "checkbox") filters[key] = field.checked;
+    else if (field.type !== "radio" || field.checked) filters[key] = field.value;
+    return filters;
+  }, {});
+}
+
+function restoreFilters(filters = {}) {
+  [...document.querySelectorAll(".recipe-filter-row select, .recipe-filter-row input")].forEach(field => {
+    const key = field.name || field.id;
+    if (!key || !(key in filters)) return;
+    if (field.type === "checkbox") field.checked = Boolean(filters[key]);
+    else if (field.type === "radio") field.checked = field.value === filters[key];
+    else if (field.tagName === "SELECT") {
+      if ([...field.options].some(option => option.value === filters[key])) field.value = filters[key];
+    } else field.value = filters[key];
+  });
+}
+
+function saveSessionState() {
+  if (isRestoringSession) return;
+  const filters = getFilterState();
+  const hasState = selectedIngredients.length > 0 || !resultsSection.hidden || Object.values(filters).some(value => value && value !== "any");
+  try {
+    if (!hasState) {
+      sessionStorage.removeItem(SESSION_STATE_KEY);
+      return;
+    }
+    sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify({
+      selectedProducts: [...selectedIngredients],
+      filters,
+      cuisine: cuisineFilter.value,
+      difficulty: filters.difficulty || null,
+      resultsVisible: !resultsSection.hidden,
+      resultRecipeNames: rankedRecommendations.map(recipe => recipe.name),
+      visibleRecipeCount,
+      scrollY: Math.max(0, Math.round(window.scrollY))
+    }));
+  } catch (error) {
+    console.warn("Не удалось сохранить состояние сессии.", error);
+  }
+}
+
+function restoreSessionState() {
+  let state;
+  try {
+    state = JSON.parse(sessionStorage.getItem(SESSION_STATE_KEY) || "null");
+  } catch (error) {
+    try { sessionStorage.removeItem(SESSION_STATE_KEY); } catch (storageError) { /* Хранилище недоступно — продолжаем без восстановления. */ }
+    return false;
+  }
+  if (!state || !Array.isArray(state.selectedProducts)) return false;
+
+  isRestoringSession = true;
+  selectedIngredients.splice(0, selectedIngredients.length, ...state.selectedProducts.map(normalizeIngredient).filter(Boolean));
+  restoreFilters(state.filters || { cuisine: state.cuisine || "any" });
+  renderSelectedProducts();
+
+  if (state.resultsVisible && selectedIngredients.length) {
+    const availableRecipes = cuisineFilter.value === "any" ? recipes : recipes.filter(recipe => recipe.cuisine.includes(cuisineFilter.value));
+    const recalculated = buildDiverseRanking(availableRecipes.map(recipe => scoreRecipe(recipe, selectedIngredients)));
+    const recipesByName = new Map(recalculated.map(recipe => [recipe.name, recipe]));
+    const restoredOrder = Array.isArray(state.resultRecipeNames)
+      ? state.resultRecipeNames.map(name => recipesByName.get(name)).filter(Boolean)
+      : [];
+    rankedRecommendations = restoredOrder.length ? restoredOrder : recalculated;
+    visibleRecipeCount = Math.min(Math.max(Number(state.visibleRecipeCount) || 3, 3), rankedRecommendations.length);
+    renderRecipeResults();
+    updateResultsSummary(selectedIngredients.length);
+    resultsSection.hidden = false;
+  } else {
+    rankedRecommendations = [];
+    visibleRecipeCount = 3;
+    resultsSection.hidden = true;
+    resultsGrid.innerHTML = "";
+    moreResults.hidden = true;
+  }
+
+  const savedScrollY = Math.max(0, Number(state.scrollY) || 0);
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: savedScrollY, behavior: "auto" })));
+  isRestoringSession = false;
+  return true;
 }
 
 function parseIngredients(value) {
@@ -206,6 +296,7 @@ function addProduct(product, announce = true) {
   renderSelectedProducts();
   input.removeAttribute("aria-invalid");
   message.textContent = "";
+  saveSessionState();
   return true;
 }
 
@@ -338,13 +429,19 @@ function showRecipes(userIngredients) {
   rankedRecommendations = buildDiverseRanking(availableRecipes.map(recipe => scoreRecipe(recipe, userIngredients)));
   visibleRecipeCount = 3;
   renderRecipeResults();
+  updateResultsSummary(userIngredients.length);
+  resultsSection.hidden = false;
+  saveSessionState();
+  resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function updateResultsSummary(productCount) {
+  const selectedCuisine = cuisineFilter.value;
   const best = rankedRecommendations[0]?.percentage || 0;
   const cuisineSuffix = selectedCuisine === "any" ? "" : ` · ${CUISINE_LABELS[selectedCuisine].toLowerCase()} кухня`;
   resultsSummary.textContent = best > 0
-    ? `Нашли лучшие варианты для ${userIngredients.length} ${pluralizeProducts(userIngredients.length)}${cuisineSuffix}`
+    ? `Нашли лучшие варианты для ${productCount} ${pluralizeProducts(productCount)}${cuisineSuffix}`
     : "Точных совпадений нет, но вот самые близкие идеи";
-  resultsSection.hidden = false;
-  resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderRecipeResults() {
@@ -358,6 +455,7 @@ function renderRecipeResults() {
 showMoreButton.addEventListener("click", () => {
   visibleRecipeCount = Math.min(visibleRecipeCount + 6, rankedRecommendations.length);
   renderRecipeResults();
+  saveSessionState();
 });
 
 function pluralizeProducts(count) {
@@ -381,6 +479,8 @@ function clearAll() {
   resultsGrid.innerHTML = "";
   moreResults.hidden = true;
   rankedRecommendations = [];
+  visibleRecipeCount = 3;
+  sessionStorage.removeItem(SESSION_STATE_KEY);
   input.focus();
 }
 
@@ -440,6 +540,7 @@ productChips.addEventListener("click", event => {
   const index = selectedIngredients.indexOf(button.dataset.product);
   if (index >= 0) selectedIngredients.splice(index, 1);
   renderSelectedProducts();
+  saveSessionState();
 });
 document.addEventListener("click", event => {
   if (!event.target.closest(".input-wrap")) closeSuggestions();
@@ -452,6 +553,20 @@ fillExampleButton.addEventListener("click", () => {
 });
 cuisineFilter.addEventListener("change", () => {
   if (!resultsSection.hidden && selectedIngredients.length) showRecipes([...selectedIngredients]);
+  else saveSessionState();
+});
+
+resultsGrid.addEventListener("click", event => {
+  if (event.target.closest(".recipe-video-link")) saveSessionState();
+});
+
+window.addEventListener("scroll", () => {
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = setTimeout(saveSessionState, 120);
+}, { passive: true });
+window.addEventListener("pagehide", saveSessionState);
+window.addEventListener("pageshow", event => {
+  if (event.persisted) restoreSessionState();
 });
 
 async function handlePhotoChange(event) {
@@ -596,3 +711,5 @@ function resetPhotoPanel(clearFile = true) {
     cameraInput.value = "";
   }
 }
+
+restoreSessionState();
